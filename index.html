@@ -1,1 +1,58 @@
-cheeto
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home of Cheezos</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .image {
+            animation: rotating 10s linear infinite;
+            max-width: 100%;
+        }
+
+        .disclaimer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            background-color: white;
+            padding: 10px 0;
+        }
+
+        @keyframes rotating {
+            0% {
+                transform: rotate(0);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://s6.imgcdn.dev/W1FKq.png" alt="cheeto" class="image">
+    </div>
+    <div class="disclaimer">
+        Not affiliated with the Cheeto brand or Frito-Lay.
+    </div>
+</body>
+</html>
