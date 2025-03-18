@@ -3,6 +3,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chee.to</title>
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Earth_Western_Hemisphere_transparent_background.png/1200px-Earth_Western_Hemisphere_transparent_background.png" />
     <style>
       body {
         margin: 0;
@@ -20,10 +21,6 @@
         position: relative;
       }
 
-      .image {
-        animation: rotating 10s linear infinite;
-        max-width: 100%;
-      }
 
       .disclaimer {
         position: fixed;
@@ -100,13 +97,6 @@
     </style>
   </head>
   <body>
-    <div class="container" id="cheetoContainer">
-      <img
-        id="cheeto"
-        src="https://www.actuallyfoods.com/assets/CheesePuff_10.png"
-        alt="An image of a cheeto"
-        class="image"
-      />
     </div>
     <div class="forsale-overlay">
       <a href="https://www.namecheap.com/domains/registration/results/?domain=chee.to" class="forsale-container" id="bouncingText">
@@ -262,7 +252,6 @@
       function triggerChainReaction() {
         const elements = [
           { element: text, delay: 0 },
-          { element: document.getElementById('cheetoContainer'), delay: 60 },
           { element: document.getElementById('disclaimer'), delay: 120 }
         ];
 
