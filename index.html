@@ -796,19 +796,19 @@
                 // --- Vertical Rendering for Mobile (Hours over Minutes) ---
                 const [hourString, minuteString] = timeString.split(':');
                 const verticalSpacing = fontSize * 0.1; // Reduced spacing (was 0.25)
-                const totalHeight = 2 * fontSize + verticalSpacing; // Height for two lines
-                const startY = (canvas.height - totalHeight) / 2; // Top of the combined text block
 
                 // Center text horizontally
                 const textX = canvas.width / 2;
 
-                // Draw Hour String (Top line)
-                // Adjust Y for text baseline 'middle'
-                offscreenCtx.fillText(hourString, textX, startY + fontSize / 2);
+                // Calculate Y coordinates directly relative to the canvas center
+                const hourY = canvas.height / 2 - fontSize / 2 - verticalSpacing / 2;
+                const minuteY = canvas.height / 2 + fontSize / 2 + verticalSpacing / 2;
 
-                // Draw Minute String (Bottom line)
-                // Adjust Y for text baseline 'middle'
-                offscreenCtx.fillText(minuteString, textX, startY + fontSize + verticalSpacing + fontSize / 2);
+                // Draw Hour String (Top line) - using calculated center Y
+                offscreenCtx.fillText(hourString, textX, hourY);
+
+                // Draw Minute String (Bottom line) - using calculated center Y
+                offscreenCtx.fillText(minuteString, textX, minuteY);
                 // --- End Vertical Rendering ---
             } else {
                 // --- Horizontal Rendering (Existing Logic) ---
