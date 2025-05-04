@@ -31,7 +31,7 @@
     <canvas id="vortex"></canvas>
     <script type="text/javascript">
         // === CONFIGURABLE CONSTANTS ===
-        const CANVAS_SIZE_MULTIPLIER = 1.2;
+        const CANVAS_SIZE_MULTIPLIER = 1.0;
         const SPAWN_RADIUS_EXTRA = 50;
         const SPAWN_DURATION = 3000;
         const SIZE_LEVELS = 10;
@@ -50,7 +50,6 @@
         const PARTICLE_MIN_DIST = 120;
         const PARTICLE_GRAVITY = 80000000;
         const PARTICLE_MAX_VEL = 250;
-        const PARTICLE_DAMPING_FACTOR = 0.998; // Reduced damping from 0.99
         const PARTICLE_MIN_ABS_SPEED = 5; // Increased minimum speed from 1.5
         const PARTICLE_OUT_BOUNDS = 200;
         const NOTIFICATION_DURATION = 2000;
@@ -69,6 +68,7 @@
         const RESPONSIVE_FONT_MULTIPLIER = 0.5;
         const SCHEDULE_UPDATE_BUFFER = 50;
         const ALPHA_TRANSITION_DURATION = 1500; // Duration for alpha transition in ms (e.g., 1.5 seconds)
+        const MOBILE_WIDTH_THRESHOLD = 992; // Increased threshold for vertical time display (was 768)
 
         // Starfield constants
         const NUM_STARS = 300;
@@ -94,6 +94,12 @@
         const MOUSE_REPEL_STRENGTH = 10000000; // How strongly other particles are pushed
         const MOUSE_ATTRACT_STRENGTH = 50; // How strongly the Patreon particle is pulled (Lower value for gentler pull)
 
+        // Dynamic Damping Constants
+        const DAMPING_FACTOR_MOBILE = 0.995;  // More damping on smaller screens
+        const DAMPING_FACTOR_DESKTOP = 0.998; // Less damping on larger screens (original value)
+        const DAMPING_SCALE_MIN_DIM = 320;    // Smallest dimension for scaling start
+        const DAMPING_SCALE_MAX_DIM = 1200;   // Dimension where scaling reaches desktop value
+
         // === END CONFIGURABLE CONSTANTS ===
 
         // Global variables that will be calculated dynamically
@@ -104,6 +110,7 @@
         let isCacheReady = false;
         let currentHourForCache = -1; // Track hour used for cache generation
         let currentTimeHueShift = 0; // Store the current hue shift value
+        let currentDampingFactor = DAMPING_FACTOR_DESKTOP; // Initialize with default
 
         // Space/planet-themed emojis (all planets + Pluto + Sun + Moon + Star)
         const emojis = [
@@ -204,6 +211,12 @@
             MIN_SIZE = Math.max(10, Math.floor(minDimension * 0.015));
             MAX_SIZE = Math.max(15, Math.floor(minDimension * 0.025));
             // --- End Dynamic Calculation ---
+
+            // --- Calculate Dynamic Damping --- 
+            const t = Math.max(0, Math.min(1, (minDimension - DAMPING_SCALE_MIN_DIM) / (DAMPING_SCALE_MAX_DIM - DAMPING_SCALE_MIN_DIM)));
+            currentDampingFactor = DAMPING_FACTOR_MOBILE + t * (DAMPING_FACTOR_DESKTOP - DAMPING_FACTOR_MOBILE);
+            // console.log(`minDim: ${minDimension.toFixed(0)}, t: ${t.toFixed(2)}, damping: ${currentDampingFactor.toFixed(4)}`); // Debug log
+            // --- End Dynamic Damping Calculation ---
 
             // Re-generate blur cache since sizes changed, using the current time hue shift
             makeEmojiVariantCache(currentTimeHueShift);
@@ -497,8 +510,8 @@
                 }
 
                 // Apply velocity damping
-                this.vx *= PARTICLE_DAMPING_FACTOR;
-                this.vy *= PARTICLE_DAMPING_FACTOR;
+                this.vx *= currentDampingFactor;
+                this.vy *= currentDampingFactor;
 
                 // --- Start: Enforce Minimum Speed ---
                 const currentSpeedSq = this.vx * this.vx + this.vy * this.vy;
@@ -771,14 +784,39 @@
             // Get current local time
             const timeString = getCurrentLocalTime();
 
-            // Render time string offscreen to compute target points
+            // Common text settings
             offscreenCtx.font = `${fontSize}px Arial, sans-serif`;
             offscreenCtx.textAlign = 'center';
             offscreenCtx.textBaseline = 'middle';
-            offscreenCtx.fillStyle = 'white';
-            const textX = canvas.width / 2;
-            const textY = canvas.height / 2;
-            offscreenCtx.fillText(timeString, textX, textY);
+            offscreenCtx.fillStyle = 'white'; // Target points are based on white pixels
+
+            const isMobile = canvas.width < MOBILE_WIDTH_THRESHOLD;
+
+            if (isMobile) {
+                // --- Vertical Rendering for Mobile (Hours over Minutes) ---
+                const [hourString, minuteString] = timeString.split(':');
+                const verticalSpacing = fontSize * 0.1; // Reduced spacing (was 0.25)
+                const totalHeight = 2 * fontSize + verticalSpacing; // Height for two lines
+                const startY = (canvas.height - totalHeight) / 2; // Top of the combined text block
+
+                // Center text horizontally
+                const textX = canvas.width / 2;
+
+                // Draw Hour String (Top line)
+                // Adjust Y for text baseline 'middle'
+                offscreenCtx.fillText(hourString, textX, startY + fontSize / 2);
+
+                // Draw Minute String (Bottom line)
+                // Adjust Y for text baseline 'middle'
+                offscreenCtx.fillText(minuteString, textX, startY + fontSize + verticalSpacing + fontSize / 2);
+                // --- End Vertical Rendering ---
+            } else {
+                // --- Horizontal Rendering (Existing Logic) ---
+                const textX = canvas.width / 2;
+                const textY = canvas.height / 2;
+                offscreenCtx.fillText(timeString, textX, textY);
+                // --- End Horizontal Rendering ---
+            }
 
             // Get pixel data
             const imageData = offscreenCtx.getImageData(0, 0, canvas.width, canvas.height);
