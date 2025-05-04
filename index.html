@@ -1148,6 +1148,41 @@
         updateBackgroundColor(); // Set initial background color
         setInterval(updateBackgroundColor, 60000); // Update background every minute
 
+        // --- Helper function to check if a point is inside the Patreon particle ---
+        function isPointInsidePatreonParticle(checkX, checkY) {
+            if (!patreonParticleSpawned || !patreonParticle) {
+                return false; // Not spawned or doesn't exist
+            }
+
+            const p = patreonParticle;
+            let particleWidth = 0;
+            let particleHeight = 0;
+
+            // Estimate size (reuse logic from click handler - consider refactoring)
+            if (emojiVariantCache && emojiVariantCache[p.emojiIndex] && emojiVariantCache[p.emojiIndex][SIZE_LEVELS-1]) {
+                const approxLargestHueCanvas = emojiVariantCache[p.emojiIndex][SIZE_LEVELS-1][0];
+                if (approxLargestHueCanvas) {
+                    particleWidth = approxLargestHueCanvas.width * p.scaleFactor;
+                    particleHeight = approxLargestHueCanvas.height * p.scaleFactor;
+                }
+            }
+            if (particleWidth === 0) { // Fallback
+                particleWidth = (2 * MAX_SIZE) * p.scaleFactor;
+                particleHeight = (2 * MAX_SIZE) * p.scaleFactor;
+            }
+
+            const particleLeft = p.x - particleWidth / 2;
+            const particleTop = p.y - particleHeight / 2;
+
+            return (
+                checkX >= particleLeft &&
+                checkX <= particleLeft + particleWidth &&
+                checkY >= particleTop &&
+                checkY <= particleTop + particleHeight
+            );
+        }
+        // --- End Helper Function ---
+
         // Click Handler for Patreon Link
         function handleCanvasClick(event) {
             if (!patreonParticle) return; // No particle to check
@@ -1162,37 +1197,8 @@
             const clickX = (event.clientX - rect.left) * scaleX;   // scale mouse coordinates after they have
             const clickY = (event.clientY - rect.top) * scaleY;    // been adjusted to be relative to element
 
-            // Get particle dimensions
-            const p = patreonParticle;
-            let particleWidth = 0;
-            let particleHeight = 0;
-
-            // Need to estimate size from cache if possible, or use MAX_SIZE as approximation
-            // Let's approximate using MAX_SIZE for simplicity, refine if needed
-             if (emojiVariantCache && emojiVariantCache[p.emojiIndex] && emojiVariantCache[p.emojiIndex][SIZE_LEVELS-1]) {
-                 const approxLargestHueCanvas = emojiVariantCache[p.emojiIndex][SIZE_LEVELS-1][0]; // Use base hue
-                 if(approxLargestHueCanvas) {
-                    particleWidth = approxLargestHueCanvas.width * p.scaleFactor;
-                    particleHeight = approxLargestHueCanvas.height * p.scaleFactor;
-                 } 
-             }
-             // Fallback if cache check fails (use MAX_SIZE directly?)
-             if(particleWidth === 0) { 
-                 particleWidth = (2 * MAX_SIZE) * p.scaleFactor;
-                 particleHeight = (2 * MAX_SIZE) * p.scaleFactor;
-             }
-
-            const particleLeft = p.x - particleWidth / 2;
-            const particleTop = p.y - particleHeight / 2;
-
-            // Check if click is within bounds
-            if (
-                patreonParticleSpawned && // Only check if spawned
-                clickX >= particleLeft &&
-                clickX <= particleLeft + particleWidth &&
-                clickY >= particleTop &&
-                clickY <= particleTop + particleHeight
-            ) {
+            // Check if click is within bounds using the helper function
+            if (patreonParticleSpawned && isPointInsidePatreonParticle(clickX, clickY)) {
                 window.open(PATREON_URL, '_blank');
             }
         }
@@ -1210,34 +1216,8 @@
 
             let nowHovering = false;
             if (patreonParticleSpawned && patreonParticle) { // Check spawn flag
-                const p = patreonParticle;
-                let particleWidth = 0;
-                let particleHeight = 0;
-
-                // Estimate size (reuse logic from click handler - consider refactoring)
-                if (emojiVariantCache && emojiVariantCache[p.emojiIndex] && emojiVariantCache[p.emojiIndex][SIZE_LEVELS-1]) {
-                    const approxLargestHueCanvas = emojiVariantCache[p.emojiIndex][SIZE_LEVELS-1][0];
-                    if (approxLargestHueCanvas) {
-                        particleWidth = approxLargestHueCanvas.width * p.scaleFactor;
-                        particleHeight = approxLargestHueCanvas.height * p.scaleFactor;
-                    }
-                }
-                if (particleWidth === 0) {
-                    particleWidth = (2 * MAX_SIZE) * p.scaleFactor;
-                    particleHeight = (2 * MAX_SIZE) * p.scaleFactor;
-                }
-
-                const particleLeft = p.x - particleWidth / 2;
-                const particleTop = p.y - particleHeight / 2;
-
-                if (
-                    mouseX >= particleLeft &&
-                    mouseX <= particleLeft + particleWidth &&
-                    mouseY >= particleTop &&
-                    mouseY <= particleTop + particleHeight
-                ) {
-                    nowHovering = true;
-                }
+                 // Check hover using the helper function
+                 nowHovering = isPointInsidePatreonParticle(mouseX, mouseY);
             }
 
             // Update cursor only if hover state changed
@@ -1294,6 +1274,23 @@
         }, { passive: false });
 
         canvas.addEventListener('touchend', (event) => {
+            // Check if the touch end location is inside the Patreon particle
+            if (patreonParticleSpawned && event.changedTouches && event.changedTouches.length > 0) {
+                const touch = event.changedTouches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const touchEndX = (touch.clientX - rect.left) * scaleX;
+                const touchEndY = (touch.clientY - rect.top) * scaleY;
+
+                if (isPointInsidePatreonParticle(touchEndX, touchEndY)) {
+                    window.open(PATREON_URL, '_blank');
+                     // Optional: Prevent the default behavior if the link was opened
+                     // to avoid potential unwanted side effects like scrolling.
+                     // event.preventDefault(); // Let's leave this commented out for now unless needed
+                }
+            }
+
             // Reset mouse position when touch ends
             mouseX = -1;
             mouseY = -1;
