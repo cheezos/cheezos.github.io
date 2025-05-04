@@ -88,6 +88,7 @@
         const PATREON_MAX_ALPHA = 1.0; // Patreon particle max alpha
         const PATREON_TRAIL_LENGTH = 30; // Number of points in the trail (Increased again)
         const PATREON_SPAWN_DELAY = 10000; // 10-second spawn delay in milliseconds
+        const PATREON_HITBOX_PADDING = 20; // Extra pixels added to each side for easier clicking/tapping
 
         // Mouse interaction constants
         const MOUSE_INTERACTION_RADIUS = 50; // How close the pointer needs to be
@@ -1171,14 +1172,18 @@
                 particleHeight = (2 * MAX_SIZE) * p.scaleFactor;
             }
 
-            const particleLeft = p.x - particleWidth / 2;
-            const particleTop = p.y - particleHeight / 2;
+            // Add padding to the hitbox dimensions
+            const paddedWidth = particleWidth + 2 * PATREON_HITBOX_PADDING;
+            const paddedHeight = particleHeight + 2 * PATREON_HITBOX_PADDING;
+
+            const particleLeft = p.x - paddedWidth / 2;
+            const particleTop = p.y - paddedHeight / 2;
 
             return (
                 checkX >= particleLeft &&
-                checkX <= particleLeft + particleWidth &&
+                checkX <= particleLeft + paddedWidth &&
                 checkY >= particleTop &&
-                checkY <= particleTop + particleHeight
+                checkY <= particleTop + paddedHeight
             );
         }
         // --- End Helper Function ---
