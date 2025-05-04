@@ -33,16 +33,14 @@
         // === CONFIGURABLE CONSTANTS ===
         const CANVAS_SIZE_MULTIPLIER = 1.0;
         const SPAWN_RADIUS_EXTRA = 50;
-        const SPAWN_DURATION = 3000;
+        const SPAWN_DURATION = 1000;
         const SIZE_LEVELS = 10;
-        const HUE_LEVELS = 6; // Reduced from 12
-        const STAR_HUE_LEVELS = 3; // Reduced from 5
-        const MAX_BLUR = 0;
-        const MIN_BLUR = 0;
+        const HUE_LEVELS = 1; // Reduced from 6 (Only base color)
+        const STAR_HUE_LEVELS = 1; // Reduced from 3 (Only base color)
         const MIN_ALPHA = 0.0;
         const MAX_ALPHA = 0.8;
         const ALPHA_FADE_RADIUS = 0.2;
-        const STAR_WEIGHT = 100;
+        const STAR_WEIGHT = 500;
         const OTHER_EMOJI_WEIGHT = 1;
         const PARTICLE_SPEED_MIN = 20;
         const PARTICLE_PERP_SPEED = 5;
@@ -51,6 +49,8 @@
         const PARTICLE_GRAVITY = 80000000;
         const PARTICLE_MAX_VEL = 250;
         const PARTICLE_MIN_ABS_SPEED = 5; // Increased minimum speed from 1.5
+        const PARTICLE_MIN_MASS = 0.5; // Added: Minimum mass multiplier
+        const PARTICLE_MAX_MASS = 1.5; // Added: Maximum mass multiplier
         const PARTICLE_OUT_BOUNDS = 200;
         const NOTIFICATION_DURATION = 2000;
         const UI_FONT_STYLE = '16px Arial, sans-serif';
@@ -79,6 +79,9 @@
 
         // Particle specific constants
         const STAR_PARTICLE_SCALE_FACTOR = 0.4; // Stars will be 60% of the normal size
+        const MOON_PARTICLE_SCALE_FACTOR = 1.0; // Moons are base size
+        const PLANET_PARTICLE_SCALE_FACTOR = 1.5; // Planets are larger
+        const STAR_TWINKLE_AMOUNT = 0.4; // How much star alpha varies (0 to 1)
 
         // Patreon Link Integration
         const PATREON_URL = 'https://www.patreon.com/c/cheezos/'; // <<< --- UPDATED URL
@@ -86,7 +89,7 @@
         const PATREON_PARTICLE_INDEX = 0; // Particle at index 0 will be the Patreon link
         const PATREON_SCALE_FACTOR = 1.125; // Reduced size by 25% (was 1.5)
         const PATREON_MAX_ALPHA = 1.0; // Patreon particle max alpha
-        const PATREON_TRAIL_LENGTH = 30; // Number of points in the trail (Increased again)
+        const PATREON_TRAIL_LENGTH = 20; // Reduced from 30
         const PATREON_SPAWN_DELAY = 10000; // 10-second spawn delay in milliseconds
         const PATREON_HITBOX_PADDING = 20; // Extra pixels added to each side for easier clicking/tapping
 
@@ -96,10 +99,17 @@
         const MOUSE_ATTRACT_STRENGTH = 50; // How strongly the Patreon particle is pulled (Lower value for gentler pull)
 
         // Dynamic Damping Constants
-        const DAMPING_FACTOR_MOBILE = 0.995;  // More damping on smaller screens
-        const DAMPING_FACTOR_DESKTOP = 0.998; // Less damping on larger screens (original value)
+        const DAMPING_FACTOR_MOBILE = 0.98;  // Increased damping (was 0.995)
+        const DAMPING_FACTOR_DESKTOP = 0.99; // Increased damping (was 0.998)
         const DAMPING_SCALE_MIN_DIM = 320;    // Smallest dimension for scaling start
         const DAMPING_SCALE_MAX_DIM = 1200;   // Dimension where scaling reaches desktop value
+
+        // Particle Collision Constants
+        const COLLISION_REPEL_STRENGTH = 1000; // How strongly particles push each other
+        const COLLISION_DISTANCE_FACTOR = 0.8; // Factor of sum of radii to trigger collision ( < 1 allows some visual overlap)
+
+        // Time Change Transition Constants
+        const TIME_CHANGE_FADE_DURATION = 1000; // Duration of fade out in ms
 
         // === END CONFIGURABLE CONSTANTS ===
 
@@ -113,21 +123,22 @@
         let currentTimeHueShift = 0; // Store the current hue shift value
         let currentDampingFactor = DAMPING_FACTOR_DESKTOP; // Initialize with default
 
+        // Time Change State
+        let isFadingOutForTimeChange = false;
+        let fadeOutStartTime = 0;
+
         // Space/planet-themed emojis (all planets + Pluto + Sun + Moon + Star)
         const emojis = [
-            '☀️', // Sun
             '🌕', // Full Moon
             '🌍', // Earth
             '🌎', // Earth Americas
             '🌏', // Earth Asia-Australia
             '🪐', // Saturn
             '⭐', // Star
-            '🪐', // Uranus/Neptune (reusing Saturn for outer planets)
-            '🌕', // Mercury (reusing full moon)
-            '🪐', // Jupiter (reusing Saturn)
             'public/images/icon.png'  // Patreon Logo Path
         ];
         const STAR_INDEX = emojis.indexOf('⭐');
+        const MOON_INDEX = emojis.indexOf('🌕');
         const PATREON_INDEX = emojis.indexOf('public/images/icon.png');
 
         const emojiWeights = emojis.map((e, i) => {
@@ -220,7 +231,7 @@
             // --- End Dynamic Damping Calculation ---
 
             // Re-generate blur cache since sizes changed, using the current time hue shift
-            makeEmojiVariantCache(currentTimeHueShift);
+            makeEmojiVariantCache();
             // Recompute target points on resize
             computeTargetPoints();
             // Recreate stars for the new size
@@ -242,10 +253,14 @@
             isCacheReady = false;
             console.time('makeEmojiVariantCache'); // Add timing
             const cache = [];
-            const hueStep = 360 / HUE_LEVELS;
-            const starHueMin = 60;
-            const starHueMax = 210;
+            // const isNight = new Date().getHours() >= 20 || new Date().getHours() < 6; // Removed Day/Night check
+
+            // Revert to original hue steps/ranges
+            const hueStep = HUE_LEVELS > 1 ? 360 / HUE_LEVELS : 0;
+            const starHueMin = 60; // Original fixed range
+            const starHueMax = 210; // Original fixed range
             const starHueStep = (STAR_HUE_LEVELS > 1) ? (starHueMax - starHueMin) / (STAR_HUE_LEVELS - 1) : 0;
+
             const imagePromises = []; // Store promises for image loading
 
             for (let e = 0; e < emojis.length; e++) {
@@ -322,47 +337,14 @@
 
                         // --- Hue Variation Generation ---
                         if (isPatreon) {
-                            // Patreon Icon (Image): Only store the base version, no hue shifts
+                            // Patreon Icon (Image): Only store the base version
                             hueArr.push(baseCanvas);
-                             while (hueArr.length < HUE_LEVELS) { // Pad if needed (though only 1 is used)
-                                hueArr.push(baseCanvas);
-                             }
                         } else if (isStar) {
-                            // Generate specific hues for stars (STAR_HUE_LEVELS)
-                            const numHuesToGenerate = Math.max(1, STAR_HUE_LEVELS); // Ensure at least 1
-                            for (let h = 0; h < numHuesToGenerate; h++) {
-                                const hue = starHueMin + h * starHueStep;
-                                // Always generate hue canvas for stars unless STAR_HUE_LEVELS is 1
-                                if (STAR_HUE_LEVELS === 1) {
-                                    hueArr.push(baseCanvas);
-                                    break; // Only need base
-                                }
-                                const hueCanvas = document.createElement('canvas');
-                                hueCanvas.width = hueCanvas.height = baseSize;
-                                const hueCtx = hueCanvas.getContext('2d');
-                                // Apply base shift + specific star hue
-                                hueCtx.filter = `hue-rotate(${baseHueShift + hue}deg)`;
-                                hueCtx.drawImage(baseCanvas, 0, 0); // Draw base onto filtered context
-                                // No save/restore needed here
-                                hueArr.push(hueCanvas);
-                            }
-                            // Pad if necessary (should match STAR_HUE_LEVELS)
-                            while (hueArr.length < STAR_HUE_LEVELS) { 
-                                hueArr.push(hueArr[0] || baseCanvas); // Prevent error if array empty
-                            }
+                            // Star: Only store the base version
+                            hueArr.push(baseCanvas);
                         } else {
-                            // Generate full spectrum hues for non-stars (HUE_LEVELS)
-                            hueArr.push(baseCanvas); // Add base at index 0
-                            for (let h = 1; h < HUE_LEVELS; h++) {
-                                const hue = h * hueStep;
-                                const hueCanvas = document.createElement('canvas');
-                                hueCanvas.width = hueCanvas.height = baseSize;
-                                const hueCtx = hueCanvas.getContext('2d');
-                                // Apply base shift + regular hue step
-                                hueCtx.filter = `hue-rotate(${baseHueShift + hue}deg)`;
-                                hueCtx.drawImage(baseCanvas, 0, 0);
-                                hueArr.push(hueCanvas);
-                            }
+                            // Non-stars: Only store the base version
+                            hueArr.push(baseCanvas);
                         }
                         // --- End Hue Variation Generation ---
 
@@ -393,11 +375,15 @@
                 this.sunChangeTime = null; // Timestamp of the last sun change
                 this.emojiIndex = 0;
                 this.size = 0;
+                this.mass = 1; // Added: Mass property, default to 1
                 this.scaleFactor = 1; // Add scale factor property
                 this.hueRotation = 0; // For stars: specific hue rotation value
                 this.hueLevel = 0; // For non-stars: index into cached hues
                 this.isPatreonParticle = false; // Flag for the special particle
                 this.trail = []; // Initialize trail array
+                this.fadeStartAlpha = 1.0; // Alpha at the start of a time change fade
+                this.twinkleSpeed = 0; // Speed of alpha variation for stars
+                this.twinklePhase = 0; // Phase offset for alpha variation
                 this.reset(true);
             }
 
@@ -445,13 +431,28 @@
                     this.size = MAX_SIZE;
                 }
 
+                // Calculate Mass based on size (before scaling)
+                if (MAX_SIZE > MIN_SIZE) {
+                    const sizeRatio = (this.size - MIN_SIZE) / (MAX_SIZE - MIN_SIZE);
+                    this.mass = PARTICLE_MIN_MASS + sizeRatio * (PARTICLE_MAX_MASS - PARTICLE_MIN_MASS);
+                } else {
+                    this.mass = (PARTICLE_MIN_MASS + PARTICLE_MAX_MASS) / 2; // Average mass if min=max size
+                }
+                // Ensure mass doesn't go outside bounds due to float issues
+                this.mass = Math.max(PARTICLE_MIN_MASS, Math.min(PARTICLE_MAX_MASS, this.mass));
+
                 // Set scale factor based on emoji
                 if (this.isPatreonParticle) {
-                     this.scaleFactor = PATREON_SCALE_FACTOR;
+                    this.scaleFactor = PATREON_SCALE_FACTOR;
                 } else if (this.emojiIndex === STAR_INDEX) {
                     this.scaleFactor = STAR_PARTICLE_SCALE_FACTOR;
+                    // Initialize twinkle properties for stars
+                    this.twinkleSpeed = (Math.random() * 0.01) + 0.005; // Increased speed (was 0.001, 0.0005)
+                    this.twinklePhase = Math.random() * Math.PI * 2; // Random phase
+                } else if (this.emojiIndex === MOON_INDEX) {
+                    this.scaleFactor = MOON_PARTICLE_SCALE_FACTOR;
                 } else {
-                    this.scaleFactor = 1.5; // Scale for other non-star emojis
+                    this.scaleFactor = PLANET_PARTICLE_SCALE_FACTOR; // Use specific planet scale
                 }
 
                 // Set hue level
@@ -468,6 +469,7 @@
 
                 this.previousSun = null; // Reset previous sun on particle reset
                 this.sunChangeTime = null; // Reset timestamp on particle reset
+                this.fadeStartAlpha = 1.0; // Reset fade alpha
             }
 
             // Helper function to calculate alpha based on distance to a given point
@@ -491,8 +493,8 @@
             }
 
             update(deltaTime) {
-                // Only apply gravity if enabled
-                if (gravityEnabled) {
+                // Skip gravity if fading out for time change
+                if (!isFadingOutForTimeChange && gravityEnabled) {
                     const dx = this.sun.x - this.x;
                     const dy = this.sun.y - this.y;
                     const distSq = dx * dx + dy * dy;
@@ -502,7 +504,8 @@
                     if (distSq > 1e-6) { 
                         const actualDistSq = Math.max(distSq, minDistSq);
                         const dist = Math.sqrt(actualDistSq); // Need sqrt for force calculation direction
-                        const forceMagnitude = PARTICLE_GRAVITY / actualDistSq; // Use squared distance here
+                        // Apply mass to gravity force
+                        const forceMagnitude = (PARTICLE_GRAVITY * this.mass) / actualDistSq;
                         // Apply force scaled by deltaTime
                         const forceScale = forceMagnitude * deltaTime / dist; // Pre-calculate scaling factor
                         this.vx += dx * forceScale;
@@ -602,47 +605,38 @@
                 // Determine the correct max alpha based on particle type
                 const maxAlphaToUse = this.isPatreonParticle ? PATREON_MAX_ALPHA : MAX_ALPHA;
 
-                // Alpha calculation (distance fade + transition)
+                // --- Alpha Calculation --- START
                 let finalAlpha;
-                const now = Date.now();
-
-                if (this.sunChangeTime && this.previousSun) {
-                    const elapsedTransition = now - this.sunChangeTime;
-
-                    if (elapsedTransition < ALPHA_TRANSITION_DURATION) {
-                        // Still transitioning
-                        const transitionProgress = elapsedTransition / ALPHA_TRANSITION_DURATION;
-
-                        // Interpolate Alpha using the correct max alpha for each point
-                        const alphaCurrent = this.calculateAlphaForSun(this.sun, maxAlphaToUse);
-                        const alphaPrevious = this.calculateAlphaForSun(this.previousSun, maxAlphaToUse); // Use same maxAlpha for prev point for consistent transition
-                        finalAlpha = alphaPrevious + (alphaCurrent - alphaPrevious) * transitionProgress;
-
-                    } else {
-                        // Transition finished
-                        finalAlpha = this.calculateAlphaForSun(this.sun, maxAlphaToUse);
-                        this.previousSun = null; // Clear previous sun data
-                        this.sunChangeTime = null;
-                    }
+                if (isFadingOutForTimeChange) {
+                    // Calculate alpha during the time change fade out
+                    const elapsedFadeTime = Date.now() - fadeOutStartTime;
+                    const fadeProgress = Math.min(1, elapsedFadeTime / TIME_CHANGE_FADE_DURATION);
+                    finalAlpha = Math.max(0, this.fadeStartAlpha * (1 - fadeProgress));
                 } else {
-                    // No transition happening
+                    // Normal alpha calculation based on distance to current sun
                     finalAlpha = this.calculateAlphaForSun(this.sun, maxAlphaToUse);
+                    // The old transition logic based on previousSun is removed
                 }
+
+                // Apply twinkle effect to stars
+                if (!this.isPatreonParticle && this.emojiIndex === STAR_INDEX && this.twinkleSpeed > 0) {
+                     // Calculate twinkle multiplier (oscillates between 0 and 1)
+                     const twinkleMultiplier = 0.5 * (1 + Math.sin(Date.now() * this.twinkleSpeed + this.twinklePhase));
+                     // Adjust alpha based on twinkle amount (ensures alpha doesn't go below (1 - amount) * base)
+                     const minAlphaFactor = 1.0 - STAR_TWINKLE_AMOUNT;
+                     finalAlpha *= (minAlphaFactor + STAR_TWINKLE_AMOUNT * twinkleMultiplier);
+                }
+                 // --- Alpha Calculation --- END
 
                 // Ensure indices are valid integers before accessing cache
                 const validEmojiIndex = Math.max(0, Math.min(emojis.length - 1, Math.floor(this.emojiIndex)));
-                // sizeLevel is already clamped and an integer
                 const validHueLevel = Math.max(0, Math.min(HUE_LEVELS - 1, Math.floor(this.hueLevel)));
 
-                // Retrieve the correct canvas from the cache
-                // For non-stars, this includes pre-rendered hue.
-                // For stars (hueLevel=0), this is the base (blur+size) canvas.
-                const emojiCanvas = emojiVariantCache[validEmojiIndex][sizeLevel][validHueLevel];
+                const emojiCanvas = emojiVariantCache[validEmojiIndex]?.[sizeLevel]?.[validHueLevel];
 
                 ctx.save();
                 // Draw the trail *first* if it's the Patreon particle
                 if (this.isPatreonParticle && this.trail.length > 1) {
-                    // Get the base canvas for the Patreon icon
                     const baseEmojiCanvas = emojiVariantCache[validEmojiIndex]?.[sizeLevel]?.[validHueLevel];
 
                     if (baseEmojiCanvas) { // Only draw trail if we have the canvas
@@ -650,106 +644,49 @@
                         const baseHeight = baseEmojiCanvas.height;
                         const trailLength = this.trail.length;
 
-                        // --- Draw Trail Segments using Image ---
-                        // Draw every fourth segment (i += 4) for reduced density
-                        for (let i = 0; i < trailLength - 1; i += 4) { // Iterate from oldest to newest
+                        for (let i = 0; i < trailLength - 1; i += 4) {
                             const point = this.trail[i];
-                            const trailProgress = i / (trailLength - 1); // 0 (oldest) to 1 (newest)
-
-                            // Alpha fades out drastically (dimmest at tail, brightest near particle)
-                            const trailAlpha = finalAlpha * Math.pow(trailProgress, 3.0) * 1.0; // Use trailProgress directly, high exponent
-
-                            // Size shrinks slower (from 0.5x to 1x instead of 0x to 1x)
+                            const trailProgress = i / (trailLength - 1);
+                            const trailAlpha = finalAlpha * Math.pow(trailProgress, 3.0) * 1.0;
                             const trailScale = 0.5 + trailProgress * 0.5;
                             const trailWidth = baseWidth * this.scaleFactor * trailScale;
                             const trailHeight = baseHeight * this.scaleFactor * trailScale;
                             const trailX = point.x - trailWidth / 2;
                             const trailY = point.y - trailHeight / 2;
 
-                             // Skip drawing if too small or transparent
                             if (trailWidth < 1 || trailHeight < 1 || trailAlpha <= 0.01) continue;
-
-                            // Calculate hue for RGB effect
                             const hue = (Date.now() / 15 + i * (360 / trailLength)) % 360;
-
-                            // Store current main alpha, set trail segment alpha, draw, restore main alpha
                             const currentGlobalAlpha = ctx.globalAlpha;
-                            ctx.globalAlpha = Math.max(0, Math.min(1, trailAlpha)); // Apply calculated trail alpha
-
-                            // Apply hue rotation filter with increased saturation and brightness
-                            ctx.save(); // Save before applying filter
+                            ctx.globalAlpha = Math.max(0, Math.min(1, trailAlpha));
+                            ctx.save();
                             ctx.filter = `hue-rotate(${hue}deg) saturate(300%) brightness(150%)`;
-
-                            ctx.drawImage(
-                                baseEmojiCanvas,
-                                trailX,
-                                trailY,
-                                trailWidth,
-                                trailHeight
-                            );
-
-                            ctx.restore(); // Restore context state (removes filter)
-
-                            ctx.globalAlpha = currentGlobalAlpha; // Restore original alpha for the next segment or main particle
+                            ctx.drawImage(baseEmojiCanvas, trailX, trailY, trailWidth, trailHeight);
+                            ctx.restore();
+                            ctx.globalAlpha = currentGlobalAlpha;
                         }
-                         // --- End Trail Segment Drawing ---
                     }
-                    // Removed the old trail drawing logic (fillStyle, arc, shadow)
                 }
 
-                // Now, draw the main particle image (will be on top of trail if Patreon)
+                // Now, draw the main particle image
                 if (emojiCanvas) {
-                    ctx.save(); // Save context before applying glow and drawing main particle
-
-                    // --- Start: Add subtle RGB Glow Effect for Patreon Particle ---
+                    ctx.save();
                     if (this.isPatreonParticle) {
-                        const glowHue = (Date.now() / 20) % 360; // Slower hue cycle for glow
-                        ctx.shadowBlur = 15; // Adjust blur amount as needed
-                        ctx.shadowColor = `hsla(${glowHue}, 100%, 70%, 0.8)`; // Lighter, slightly transparent glow
+                        const glowHue = (Date.now() / 20) % 360;
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = `hsla(${glowHue}, 100%, 70%, 0.8)`;
                     }
-                    // --- End: Add subtle RGB Glow Effect ---
 
-                    // Calculate the final alpha once, right before drawing the image and trail
-                    const maxAlphaToUse = this.isPatreonParticle ? PATREON_MAX_ALPHA : MAX_ALPHA;
-                    let finalAlpha;
-                    const now = Date.now();
-                    if (this.sunChangeTime && this.previousSun) {
-                         const elapsedTransition = now - this.sunChangeTime;
-                         if (elapsedTransition < ALPHA_TRANSITION_DURATION) {
-                              const transitionProgress = elapsedTransition / ALPHA_TRANSITION_DURATION;
-                              const alphaCurrent = this.calculateAlphaForSun(this.sun, maxAlphaToUse);
-                              const alphaPrevious = this.calculateAlphaForSun(this.previousSun, maxAlphaToUse);
-                              finalAlpha = alphaPrevious + (alphaCurrent - alphaPrevious) * transitionProgress;
-                         } else {
-                              finalAlpha = this.calculateAlphaForSun(this.sun, maxAlphaToUse);
-                              this.previousSun = null;
-                              this.sunChangeTime = null;
-                         }
-                    } else {
-                         finalAlpha = this.calculateAlphaForSun(this.sun, maxAlphaToUse);
-                    }
-                    // Ensure the finalAlpha is applied before drawing the image
-                    ctx.globalAlpha = finalAlpha;
+                    // Apply the calculated finalAlpha
+                    ctx.globalAlpha = Math.max(0, Math.min(1, finalAlpha)); // Ensure alpha is valid
 
                     const destWidth = emojiCanvas.width * this.scaleFactor;
                     const destHeight = emojiCanvas.height * this.scaleFactor;
                     const destX = this.x - destWidth / 2;
                     const destY = this.y - destHeight / 2;
-                    ctx.drawImage(
-                        emojiCanvas,
-                        destX,
-                        destY,
-                        destWidth,
-                        destHeight
-                    );
-
-                    ctx.restore(); // Restore context (removes shadow effect for next draw)
-
+                    ctx.drawImage(emojiCanvas, destX, destY, destWidth, destHeight);
+                    ctx.restore();
                 } else {
-                    console.error("Failed to get emojiCanvas for:", { 
-                        emojiIndex: this.emojiIndex, 
-                        sizeLevel: sizeLevel 
-                    });
+                    console.error("Failed to get emojiCanvas for:", { emojiIndex: this.emojiIndex, sizeLevel: sizeLevel });
                 }
 
                 ctx.restore(); // Restore the initial saved state
@@ -868,6 +805,16 @@
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillText(`Press T to toggle target gravity ${gravityEnabled ? '✅' : '❌'}`, HINT_X, HINT_Y1);
+
+            // Display memory usage if available
+            if (performance && performance.memory) {
+                const usedHeapMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+                // Optionally display limit: const limitHeapMB = (performance.memory.jsHeapSizeLimit / 1024 / 1024).toFixed(1);
+                ctx.fillText(`Mem: ${usedHeapMB} MB`, HINT_X, HINT_Y2); // Use HINT_Y2 for the second line
+            } else {
+                ctx.fillText('Mem: N/A', HINT_X, HINT_Y2); // Indicate if memory API is not supported
+            }
+
             ctx.restore();
         }
 
@@ -885,48 +832,78 @@
 
         // Update target points every minute change to reflect current time
         function scheduleNextTargetPointsUpdate() {
-            const now = Date.now(); // Use Date.now() for consistency
+            const now = Date.now();
             const date = new Date(now);
             const msToNextMinute = (60 - date.getSeconds()) * 1000 - date.getMilliseconds();
-            setTimeout(() => {
-                computeTargetPoints();
-                const currentTime = Date.now(); // Get time *after* computeTargetPoints
 
-                // --- Check for hour change and regenerate cache if needed ---
-                const currentHour = new Date(currentTime).getHours();
+            // Use a slightly shorter timeout to ensure we trigger *before* the exact minute change
+            // to capture particle state accurately.
+            const timeoutDuration = Math.max(10, msToNextMinute - 50); // Ensure timeout is not negative
+
+            setTimeout(() => {
+                // --- Check for hour change and regenerate cache if needed --- START
+                const currentHour = new Date().getHours(); // Get hour *just before* minute change
                 if (currentHour !== currentHourForCache) {
                     currentHourForCache = currentHour;
-                    currentTimeHueShift = getTimeBasedHueShift();
-                    console.log(`Hour changed to ${currentHour}. Regenerating cache with hue shift: ${currentTimeHueShift}deg`);
-                    makeEmojiVariantCache(currentTimeHueShift);
+                    currentTimeHueShift = getTimeBasedHueShift(); // This function now just returns 0
+                    console.log(`Hour changed to ${currentHour}. Regenerating cache.`);
+                    makeEmojiVariantCache(); // Regenerate cache
                 }
-                // --- End hour check ---
+                // --- Check for hour change and regenerate cache if needed --- END
 
-                // After updating targetPoints, update each particle's sun (target point)
+                // --- Initiate Time Change Fade Out --- START
+                isFadingOutForTimeChange = true;
+                fadeOutStartTime = Date.now(); // Record exact start time
+                console.log("Initiating time change fade out...");
+
+                // Store current alpha for each particle before fade
                 particles.forEach(p => {
-                    if (targetPoints.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * targetPoints.length);
-                        const newSun = targetPoints[randomIndex];
-                        // Only update previousSun if the sun actually changes
-                        if (p.sun !== newSun) {
-                           p.previousSun = p.sun ? { x: p.sun.x, y: p.sun.y } : null; // Store copy of old sun position
-                           p.sun = newSun;
-                           p.sunChangeTime = currentTime; // Set timestamp
-                        }
-                    } else {
-                         // Handle case where there are no target points (shouldn't normally happen)
-                         if (p.sun) { // Only trigger transition if it previously had a sun
-                             p.previousSun = { x: p.sun.x, y: p.sun.y };
-                             p.sunChangeTime = currentTime;
-                         }
-                        p.sun = { x: centerX, y: centerY };
-                    }
+                    const maxAlphaToUse = p.isPatreonParticle ? PATREON_MAX_ALPHA : MAX_ALPHA;
+                    // Calculate alpha based on current position relative to its *current* sun
+                    p.fadeStartAlpha = p.calculateAlphaForSun(p.sun, maxAlphaToUse);
                 });
-                scheduleNextTargetPointsUpdate();
-                // Use Date.now() consistently and add buffer *after* calculation
-            }, msToNextMinute + SCHEDULE_UPDATE_BUFFER);
+
+                // Schedule the function to run *after* the fade duration
+                setTimeout(finishTimeChangeTransition, TIME_CHANGE_FADE_DURATION);
+                 // --- Initiate Time Change Fade Out --- END
+
+            }, timeoutDuration);
         }
-        scheduleNextTargetPointsUpdate();
+
+        // Function called after the time change fade-out is complete
+        function finishTimeChangeTransition() {
+            console.log("Fade out complete. Resetting particles for new time.");
+
+            // 1. Compute the new target points based on the *new* current time
+            computeTargetPoints(); // This now reflects the minute that just started
+
+            // 2. Reset all particles to spawn towards the new points
+            particles.forEach(p => {
+                 // Reset assigns a new random sun from the *updated* targetPoints
+                 p.reset(false); 
+            });
+            // Special handling for Patreon particle if it exists and was spawned
+            if (patreonParticleSpawned && patreonParticle) {
+                // Ensure its sun is also updated correctly after reset
+                 if (targetPoints.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * targetPoints.length);
+                    patreonParticle.sun = targetPoints[randomIndex];
+                 } else {
+                    patreonParticle.sun = { x: centerX, y: centerY };
+                 }
+                 patreonParticle.previousSun = null; // Clear any transition state
+                 patreonParticle.sunChangeTime = null;
+            }
+
+            // 3. Mark fade out as complete
+            isFadingOutForTimeChange = false;
+
+            // 4. Schedule the *next* time update check for the *following* minute
+            scheduleNextTargetPointsUpdate();
+        }
+
+        // Initial call to start the cycle
+        // scheduleNextTargetPointsUpdate(); // <<< Moved this call lower after initial setup
 
         // Animation loop
         let patreonParticle = null; // Reference to the special particle
@@ -1023,8 +1000,52 @@
             }
             // --- End Delayed Configuration ---
 
-            // Update all particles first
+            // Update all particles first (gravity, damping, velocity limits)
             particles.forEach(p => p.update(deltaTime));
+
+            // --- Start Particle-Particle Collision Handling ---
+            for (let i = 0; i < particles.length; i++) {
+                const p1 = particles[i];
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+
+                    const dx = p2.x - p1.x;
+                    const dy = p2.y - p1.y;
+                    const distSq = dx * dx + dy * dy;
+
+                    // Estimate radius based on base size and scale factor
+                    // Using base size directly as radius proxy, adjust factor if needed
+                    const radius1 = (p1.size * p1.scaleFactor) * 0.5; 
+                    const radius2 = (p2.size * p2.scaleFactor) * 0.5; 
+                    const collisionDist = (radius1 + radius2) * COLLISION_DISTANCE_FACTOR;
+                    const collisionDistSq = collisionDist * collisionDist;
+
+                    if (distSq < collisionDistSq && distSq > 1e-6) {
+                        const dist = Math.sqrt(distSq);
+                        const overlap = collisionDist - dist; // How much they overlap based on the threshold
+
+                        // Calculate force magnitude - proportional to overlap, stronger when closer
+                        // Avoid extremely large forces at very small distances
+                        const forceMagnitude = COLLISION_REPEL_STRENGTH * overlap / dist;
+
+                        // Calculate force vector components
+                        const forceX = (dx / dist) * forceMagnitude;
+                        const forceY = (dy / dist) * forceMagnitude;
+
+                        // Apply force scaled by deltaTime and distributed by inverse mass
+                        const totalMass = p1.mass + p2.mass;
+                        if (totalMass > 1e-6) { // Avoid division by zero if masses are somehow zero
+                             // Apply velocity change directly (force * dt / mass)
+                             const accelScale = deltaTime / totalMass;
+                             p1.vx -= forceX * p2.mass * accelScale;
+                             p1.vy -= forceY * p2.mass * accelScale;
+                             p2.vx += forceX * p1.mass * accelScale;
+                             p2.vy += forceY * p1.mass * accelScale;
+                        }
+                    }
+                }
+            }
+            // --- End Particle-Particle Collision Handling ---
 
             // Draw non-Patreon particles with potential hue shift
             particles.forEach((p, index) => {
@@ -1126,23 +1147,11 @@
             document.body.style.backgroundColor = bgColor;
         }
 
-        // Function to calculate hue shift based on time of day
+        // Function to calculate hue shift based on time of day (Now simplified)
         function getTimeBasedHueShift() {
-            const hour = new Date().getHours();
-            let hueShift = 0; // Default: no shift
-
-            if (hour >= 22 || hour < 5) { // Late Night / Early Morning (Cooler Blues/Purples)
-                hueShift = 45; // Shift towards blue/violet
-            } else if (hour >= 5 && hour < 7) { // Dawn (Slightly cooler)
-                hueShift = 15;
-            } else if (hour >= 7 && hour < 18) { // Daytime (Neutral/Slightly Warm)
-                hueShift = -15; // Shift slightly towards yellow/green from base
-            } else if (hour >= 18 && hour < 20) { // Dusk (Warmer Oranges/Pinks)
-                hueShift = -45;
-            } else { // Evening (20 - 22) (Cooling down)
-                hueShift = -30;
-            }
-            return hueShift;
+            // No longer applies time-based shifts, just returns 0
+            // The cache generation will create full spectrum variations.
+            return 0;
         }
 
         // Initial setup calls
