@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -57,7 +18,6 @@
     <div class="container mx-auto p-4 max-w-4xl">
         <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Elden Ring Side Quests Checklist</h1>
         
-        <!-- Search and Filter -->
         <div class="mb-6">
             <input type="text" id="searchInput" placeholder="Search quests..." class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <div class="mt-4 flex flex-wrap gap-2">
@@ -76,15 +36,21 @@
                 <button onclick="filterRegion('Crumbling Farum Azula')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Farum Azula</button>
                 <button onclick="filterRegion('Leyndell, Ash')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Leyndell, Ash</button>
                 <button onclick="filterRegion('Shadow of the Erdtree')" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">Shadow of the Erdtree</button>
+                 <button onclick="filterRegion('Roundtable Hold')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Roundtable Hold</button>
+                <button onclick="filterRegion('Siofra River')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Siofra River</button>
+                <button onclick="filterRegion('Nokron')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Nokron</button>
+                <button onclick="filterRegion('Deeproot Depths')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Deeproot Depths</button>
+                <button onclick="filterRegion('Mt Gelmir')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Mt Gelmir</button>
+                <button onclick="filterRegion('Jarburg')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Jarburg</button>
+                <button onclick="filterRegion('Leyndell')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Leyndell</button>
+                <button onclick="filterRegion('Endgame')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Endgame</button>
             </div>
         </div>
 
-        <!-- Main Game Quests -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-2xl font-semibold mb-4 text-gray-700">Main Game Side Quests</h2>
             <p class="text-gray-600 mb-4">All questlines in the base game are separate from the DLC and do not require *Shadow of the Erdtree* progress to start or complete.</p>
             <div class="space-y-4">
-                <!-- Limgrave -->
                 <div class="region-section active" data-region="Limgrave">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Limgrave</h3>
                     <div class="quest-list active pl-4">
@@ -93,43 +59,40 @@
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Approach Murkwater Cave and help Yura defeat Nerijus {If Yura dies, his quest fails}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and fight Patches in Murkwater Cave (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Yura north of Murkwater Cave (Limgrave)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Church of Elleh, meet Ranni at night</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Church of Elleh meet Ranni at night</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Free Boc from tree (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Boc at Coastal Cave (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Coastal Cave boss and give Boc sewing tools {go all the way through for Church of Dragon Communion}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Sellen in Waypoint Ruins (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Rodreika at Stormhill Shack (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Alexander next to Saintsbridge (Limgrave)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet D in Stormhill past Saintsbridge (Limgrave)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet D in stormhill past Saintsbridge (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill Tibia Mariner in Summonwater Village Ruins (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to D</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Kenneth Haight (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Waypoint to Bestial Sanctum (Mistwood)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Feed Gurranq 9 deathroot {can’t find all 9 right now, just give as you find them}</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Feed Gurranq 9 deathroot {can’t find all 9 right now just give as you find them}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Rest at Bestial Sanctum Site of Grace</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Hear wolf howling (Limgrave: Mistwood)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Kale and ask about howling (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Use snap gesture next to howling (Mistwood)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Go to Forlorn Hound Evergaol and fight Darriwil (Limgrave)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Blaidd after killing Darriwil</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to blaidd after killing Darriwil</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Clear Fort Haight (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Kenneth Haight and accept his accord</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak with Kenneth Haight at Fort Haight</span></div>
                     </div>
                 </div>
-                <!-- Roundtable Hold -->
                 <div class="region-section" data-region="Roundtable Hold">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Roundtable Hold</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Enter Roundtable Hold</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Corhyn’s dialogue (Roundtable Hold)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Diallos dialogue (Roundtable Hold)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Gideon dialogue (Roundtable Hold)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Fia while she holds you (Roundtable Hold)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Hewg dialogue (Roundtable Hold)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Hewg dialogue (Roundtable hold)</span></div>
                     </div>
                 </div>
-                <!-- Weeping Peninsula -->
                 <div class="region-section" data-region="Weeping Peninsula">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Weeping Peninsula</h3>
                     <div class="quest-list pl-4">
@@ -140,21 +103,17 @@
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Irina’s location and talk to Edgar</span></div>
                     </div>
                 </div>
-                <!-- Stormveil Castle -->
                 <div class="region-section" data-region="Stormveil Castle">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Stormveil Castle</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Margit</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Gostoc (Stormveil Castle)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Rogier (Stormveil Castle)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Examine Rogier’s bloodstain (Stormveil)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Obtain Chrysalids’ Memento (Stormveil)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return Chrysalids’ Memento to Rodreika (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Nepheli Loux (Stormveil)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Godrick</span></div>
                     </div>
                 </div>
-                <!-- Roundtable Hold Post-Godrick -->
                 <div class="region-section" data-region="Roundtable Hold">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Roundtable Hold (Post-Godrick)</h3>
                     <div class="quest-list pl-4">
@@ -165,14 +124,12 @@
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Rodreika and Hewg several times until he takes her as his apprentice (Roundtable Hold)</span></div>
                     </div>
                 </div>
-                <!-- Stormveil Castle Post-Godrick -->
                 <div class="region-section" data-region="Stormveil Castle">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Stormveil Castle (Post-Godrick)</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to where you found Chrysalids’ Memento to find Crimson Hood (Stormveil)</span></div>
                     </div>
                 </div>
-                <!-- Liurnia -->
                 <div class="region-section" data-region="Liurnia">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Liurnia</h3>
                     <div class="quest-list pl-4">
@@ -181,47 +138,45 @@
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Rya (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Boggart, buy necklace and prawn (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return Rya’s necklace (Liurnia)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Nepheli at Village of Albinaurics, exhaust dialogue, and kill Omenkiller (Liurnia)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Nepheli at Village of Albinaurics, exhaust dialogue, and kill omenkiller (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Release Albus from pot in Village of Albinaurics and obtain medallion half (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Latenna at Slumbering Wolf’s Shack (Liurnia)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return medallion and promise to take Latenna to Haligtree {make sure she becomes spirit ash} (Liurnia)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return medallion and promise to take Latenna to Haligtree  {make sure she becomes spirit ash} (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Hyetta in Purified Ruins and give Shabriri Grape (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Varre’s dialogue at Rose Church (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Edgar the Revenger at Revenger’s Shack (Western Liurnia)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and exhaust Diallos’ dialogue slightly NE of Academy Gate Town Site of Grace (Liurnia)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Hyetta north of Gate Town Bridge Site of Grace and give Shabriri Grape (Liurnia)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and exhaust Diallos’ dialogue slightly NE of academy gate town site of grace (Liurnia)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Hyetta north of Gate Town Bridge site of grace and give Shabriri Grape (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Tell Hyetta what the grapes are (her voice lines will vomit)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Rest/Explore and talk to Hyetta again until she talks about becoming a finger maiden</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Hyetta’s dialogue</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Collect Gold Sewing Needle in Church of Vows (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get Black Knifeprint from Black Knife Catacombs (Liurnia)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Stormhawk King in Chapel of Anticipation (Four Belfries)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find red summon sign to assist Yura north of Main Gate Grace (Raya Lucaria)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Stormhawk King in Chaple of Anticipation (Four Belfries)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find red summon sign to assist Yura north of Main gate Grace (Raya Lucaria)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Yura after assisting him</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get second Academy Glintstone Key (Raya Lucaria Academy)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Academy Glintstone Key to Thops</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload area and kill teardrop scarab where Thops was</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Thops just outside Schoolhouse Classroom Site of Grace (Raya Lucaria)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Rennala</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Gold Sewing Needle to Boc (Rest at East Raya Lucaria Gate Site of Grace)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Gold Sewing Needle to Boc (REST at East Raya Lucaria Gate site of grace)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Hyetta at Bellum Church (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Festering Fingerprint Vyke near Church of Inhibition (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Fingerprint Grape to Hyetta in Bellum Church</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Iji (W Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Ranni in Ranni’s Rise (Three Sisters)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Agree to serve Ranni</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Blaidd, Iji, and Seluvis then return to Ranni</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet and speak to Seluvis in his tower (Three Sisters)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Balidd, Iji, and Seluvis then return to Ranni</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet and speak to Seluvis in his tower(Three Sisters)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Seluvis’ potion to Ofnir {nothing/Nepheli lives}, Nepheli {Dolores puppet from Seluvis/Nepheli dies}, OR Dung Eater {Dung Eater puppet from Seluvis/Dung Eater dies}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Seluvis’ puppets and interact with Sellen puppet (Liurnia, next to Selluvis’s Rise)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find summon signs at Raya Lucaria Grand Library to assist Sellen {Jerren’s armor, extra spells sold by Sellen} OR assist Jerren {Ancient Dragon Smithing Stone}</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find summon signs at Raya Lucaria Grand Library can assist Sellen {Jerren’s armor, extra spells sold by Sellen} OR assist Jerren {Ancient Dragon Smithing Stone}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Buy puppet from Seluvis (Three Sisters)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload and ask Seluvis for another puppet</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Purchase any of the remaining puppets Seluvis offers you (takes starlight shards)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload area and ask Seluvis about his scheme (Three Sisters)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Amber Starlight Shard (Altus Plateau)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Seluvis Amber Starlight Shard to receive Magic Scorpion Charm {Giving Ranni the Amber Draught will fail you out of her quest} (Three Sisters)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return Fingerslayer Blade to Ranni {kills Seluvis} (Three Sisters)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return Fingerslayer Blade to Ranni {kills seluvis} (Three Sisters)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Iji (W Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Free Blaidd (Forlorn Hound Evergaol)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Iji (W Liurnia)</span></div>
@@ -231,15 +186,14 @@
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Collect Mini Ranni (Ainsel River Main)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Rest at Ainsel River Main grace and speak with Ranni</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Baleful Shadow (Nokstella)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Unlock chest next to Rennala (Raya Lucaria)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Unlock chest next to Renalla (Raya Lucaria)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Enter coffin (Grand Cloister)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Astel</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Enter hole in floor in Cathedral of Manus Celes (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill Blaidd (Ranni’s Rise)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Ranni’s chamber, rest and talk to Mini Ranni</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Ranni’s chamber rest and talk to mini ranni</span></div>
                     </div>
                 </div>
-                <!-- Roundtable Hold Post-Liurnia -->
                 <div class="region-section" data-region="Roundtable Hold">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Roundtable Hold (Post-Liurnia)</h3>
                     <div class="quest-list pl-4">
@@ -254,82 +208,77 @@
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Diallos’ dialogue (Roundtable Hold)</span></div>
                     </div>
                 </div>
-                <!-- Siofra River -->
                 <div class="region-section" data-region="Siofra River">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Siofra River</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Blaidd (Siofra River)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Seluvis (Three Sisters)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Take Seluvis’s Introduction to Sellen in Waypoint Ruins (Limgrave)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Tell Blaidd about what Sellen told you (Siofra River)</span></div>
                     </div>
                 </div>
-                <!-- Caelid -->
                 <div class="region-section" data-region="Caelid">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Caelid</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Gowry in Gowry’s Shack (Caelid)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Commander O’Neil and get Unalloyed Gold Needle (Caelid)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue until Gowry fixes the Unalloyed Gold Needle (Caelid)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Take needle to Millicent at Church of the Plague (Caelid)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Commander O’Neil and get Unalloyed Gold needle (Caelid)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialog until Gowry fixes the Unalloyed Gold needle (Caelid)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Take needle to Millicent at Church of the plague (Caelid)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Rest and exhaust Millicent’s dialogue (Caelid)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Gowry’s Shack and exhaust dialogue with Millicent (Caelid)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload area and speak to Gowry (Caelid)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Starscourge Radahn</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Blaidd after Radahn (Radahn’s arena)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Alexander after Radahn (Radahn’s arena)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Witch-Hunter Jerren in Redmane Castle (Caelid)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Go through Sellia Hideaway and get sorcery from Master Lusat (Caelid)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill/loot Gowry in Gowry’s Shack (Caelid)</span></div>
                     </div>
                 </div>
-                <!-- Liurnia Post-Radahn -->
-                <div class="region-section" data-region="Liurnia">
-                    <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Liurnia (Post-Radahn)</h3>
+                <div class="region-section" data-region="Liurnia"> <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Liurnia (Post-Radahn)</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Alexander South of Carian Study Hall, above Jarburg (Liurnia)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Jar-Bairn dialogue (Jarburg)</span></div>
                     </div>
                 </div>
-                <!-- Nokron -->
+                <div class="region-section" data-region="Jarburg"> <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Jarburg</h3>
+                    <div class="quest-list pl-4">
+                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Jar-Bairn dialogue (Jarburg)</span></div>
+                    </div>
+                </div>
                 <div class="region-section" data-region="Nokron">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Nokron</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Drop down crater (Mistwood) navigate to Nokron</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Fingerslayer Blade (Night’s Sacred Ground)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find D, Beholder of Death and give unaltered twinned set (Nokron)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Use the coffin in the twin gargoyle boss arena to travel to Deeproot Depths (Nokron)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find D, Beholder of Death and give unaltered twinned set (nokron)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Use the coffin in the twin gargoyle boss arena to travel to deeproot depths (Nokron)</span></div>
                     </div>
                 </div>
-                <!-- Altus Plateau -->
                 <div class="region-section" data-region="Altus Plateau">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Altus Plateau</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach Altus Plateau</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Boc near Altus Highway Junction Site of Grace</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Millicent north of Erdtree-Gazing Site of Grace (Altus Plateau)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Yura at Second Church of Marika and help him defeat Eleonora (Altus Plateau)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Boc near Altus Highway Junction site of grace (you may be able to give him the needle here, if not that is okay, you will be able to see Boc later)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Millicent north of Erdtree-Gazing site of grace (Altus Plateau)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Amber Starlight Shard (Altus Plateau)</span></div> <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Yura at Second Church of Marika and help him defeat Eleonora (Altus Plateau)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Goldmask and tell Corhyn of his location (Altus Plateau)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload area and exhaust Corhyn dialogue next to Goldmask (Altus Plateau)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Invade 3 times with Festering Bloody Finger OR find invasion sign [Magnus the Beast Claw] in Writheblood Ruins (W of Altus Plateau minor Erdtree)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get anointed by Varre (Liurnia)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Invade 3 times with Festering Bloody Finger OR find invasion sign [Magnus the Beast Claw] in Writheblood Ruins (W of Altus Plateau minor erdtree)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get anointed by varre (Liurnia)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Soak Lord of Blood Favor in blood of maiden (Church of Inhibition [Liurnia], Chapel of Anticipation [Four Belfries], OR Kill Hyetta)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Varre Lord of Blood’s Favor (Rose Church)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Godskin Apostle at top of Dominula and exhaust Millicent’s dialogue after resting (Altus Plateau)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get Valkyrie’s Prosthesis (Shaded Castle)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Valkyrie’s Prosthesis to Millicent (Altus Plateau)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Godskin Apostle at top of Dominula and exhaust Millicent’s dialogue after resting (Altus Plateau)</span></div>
                     </div>
                 </div>
-                <!-- Roundtable Hold Post-Altus -->
                 <div class="region-section" data-region="Roundtable Hold">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Roundtable Hold (Post-Altus)</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Corhyn dialogue (Roundtable Hold)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Rogier dialogue (Roundtable Hold)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Fia and obtain weathered dagger (Roundtable Hold)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to fia and obtain weathered dagger (Roundtable Hold)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give dagger to D (Roundtable Hold)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload Roundtable Hold and exhaust dialogue with Fia in new room past Rodreika</span></div>
                     </div>
                 </div>
-                <!-- Deeproot Depths -->
                 <div class="region-section" data-region="Deeproot Depths">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Deeproot Depths</h3>
                     <div class="quest-list pl-4">
@@ -341,186 +290,180 @@
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload and pick up D’s set (Deeproot Depths)</span></div>
                     </div>
                 </div>
-                <!-- Mt Gelmir -->
                 <div class="region-section" data-region="Mt Gelmir">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Mt Gelmir</h3>
                     <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Alexander (Seethewater Terminus)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Primeval Sorcerer Azur and accept sorcery (Mt Gelmir)</span></div>
                     </div>
                 </div>
-                <!-- Weeping Peninsula Post-Altus -->
+                 <div class="region-section" data-region="Limgrave">
+                    <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Limgrave (Post-Altus)</h3> <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Show Sellen sorcery from Azur (Waypoint Ruins; Limgrave)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Show Sellen Lusat’s sorcery (Waypoint Ruins)</span></div>
+                    </div>
+                </div>
                 <div class="region-section" data-region="Weeping Peninsula">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Weeping Peninsula (Post-Altus)</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Sellen at Witchbane Ruins (Weeping Peninsula)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload Witchbane Ruins and talk to Jerren (Weeping Peninsula)</span></div>
-                    </div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload Witchbane Ruins and talk to Jerren (Limgrave)</span></div> </div>
                 </div>
-                <!-- Limgrave Post-Altus -->
-                <div class="region-section" data-region="Limgrave">
-                    <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Limgrave (Post-Altus)</h3>
-                    <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Take Seluvis’s Introduction to Sellen in Waypoint Ruins (Limgrave)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Show Sellen sorcery from Azur (Waypoint Ruins; Limgrave)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Show Sellen Lusat’s sorcery (Waypoint Ruins)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Patches in Murkwater Cave, fight, but do not kill (Limgrave)</span></div>
-                    </div>
-                </div>
-                <!-- Volcano Manor -->
                 <div class="region-section" data-region="Volcano Manor">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Volcano Manor</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Rya {at Lux Ruins if you don’t have Dectus Medallion; at Lift of Dectus if you do}</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach Volcano Manor</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Rya {at Lux Ruins if you dont have Dectus Medallion; at Lift of Dectus if you do}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Meet Tanith and pick up letter in drawing room (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Diallos’ dialogue (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Assassinate Old Knight Istvan (Stormhill)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Tanith and receive another Letter (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Rya in new room and speak to Rya in snake form (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Assassinate Rileigh the Idle (Altus Plateau)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Tanith and receive another letter (Volcano Manor)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Tanith and receive another letter (Volacano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Zoraya (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Bernahl to receive Letter to Bernahl (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Patches to receive Letter to Patches (Volcano Manor)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and defeat Tragoth (Ruin-Strewn Precipice)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and defeat Tragoth (Ruin-Strewn Precipice) {May want to kill Draconic Tree Sentinel first}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat God-Skin Noble and get Serpent’s Amnion (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Serpent’s Amnion to Zoraya (Volcano Manor)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Rest and Speak to Tanith about Zoraya’s absence (Volcano Manor)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Rest and Speak to Tanith about Zorayas’ absence (Volcano Manor)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and talk to Zoraya (Volcano Manor)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill Rya {transforms into snake and drops Daedicar’s Woe}, leave her alive or give Tonic of Forgetfulness</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill Rya {transforms into snake and drops Daedicar’s Woe}, leave her alive and come back after killing rykard {Rya gone, Daedicar’s Woe, Zorayas’ Letter}, or give Tonic of Forgetfulness {After Rykard is killed and manor inhabitants left, she will return to her spot, reload to find Daedicar’s Woe}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Volcano Manor and exhaust Diallos dialogue</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Tanith (Volcano Manor)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Rykard</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Bernahl (Volcano Manor)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Patches’ item to Tanith, kill Tanith and bodyguard (Volcano Manor)</span></div>
+                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Report back to Bernahl (Volcano Manor)</span></div> </div>
+                </div>
+                 <div class="region-section" data-region="Jarburg">
+                    <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Jarburg</h3> <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Jar-Bairn and Diallos (Jarburg)</span></div>
                     </div>
                 </div>
-                <!-- Leyndell -->
                 <div class="region-section" data-region="Leyndell">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Leyndell</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Enter Leyndell</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Boc (East Capital Rampart Site of Grace)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Boc (East Capital Rampart site of grace)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Use “You’re Beautiful” in front of Boc (good ending) OR give larval tear to Boc (bad ending)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>If “You’re Beautiful” used, reload grace and speak to Boc again</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find seedbed curse (Leyndell)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Dung Eater (Roundtable Hold)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find invasion sign to assist Bernahl (Leyndell)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Goldmask and Corhyn next to Leyndell colosseum and exhaust dialogue</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and free Dung Eater (Subterranean Shunning Grounds)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find message from Dung Eater (Roundtable Hold)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Boggart in outer moat, buy crab (outside Leyndell)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Boggart’s dialogue (Leyndell Moat)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Boggart’s body and defeat Dung Eater (Leyndell Moat)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Talk to Dung Eater (Roundtable Hold)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and feed Dung Eater 5 seedbed curses</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and feed Dung Eater 5 seedbed curses {won’t find all now just before finishing game} (Subterranean Shunning Grounds)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get Law of Regression (Leyndell)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find statue west of Erdtree Sanctuary Grace and cast Law of Regression (Leyndell)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find statue west of Ertree sanctuary grace until you see white message and cast Law of Regression (Leyndell)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak with Goldmask (Leyndell)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Morgott</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Hyetta in Frenzied Flame Proscription (Subterranean Shunning Grounds)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>If met Three Fingers, reload and pick up Frenzied Flame Seal (Subterranean Shunning Grounds)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find invasion sign to assist Bernahl (Leyndell)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Report back to Bernahl (Volcano Manor)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Goldmask and Corhyn next to Leyndell Colosseum and exhaust dialogue</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Hyetta in Frenzied Flame Proscription {MEETING THREE FINGERS WILL LOCK YOU OUT OF OTHER ENDINGS}  (Subterranean Shunning Grounds)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>{If you met Three Fingers} Reload where you spoke to Hyetta and pick up Frenzied Flame Seal  (Subterranean Shunning Grounds)</span></div>
                     </div>
                 </div>
-                <!-- Stormveil Castle Post-Morgott -->
                 <div class="region-section" data-region="Stormveil Castle">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Stormveil Castle (Post-Morgott)</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Godrick Grace and rest; Speak to Gostoc, Kenneth, and Nepheli at throne room</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Godrick grace and rest; Speak to Gostoc, Kenneth, and Nepheli at throne room</span></div>
                     </div>
                 </div>
-                <!-- Mountaintops of the Giants -->
                 <div class="region-section" data-region="Mountaintops of the Giants">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Mountaintops of the Giants</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Assassinate Juno Hoslow, Knight of Blood (Mountaintops of the Giants)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Corhyn and Goldmask at bridge south of Stargazers Ruins; exhaust dialogue</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get Haligtree Secret Medallion (Left) at Castle Sol (Mountaintops of the Giants)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Fire Giant & speak with Melina at Forge of Giants</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Corhyn and Goldmask at bridge south of stargazers Ruins; exhaust dialogue (Mountaintop of the Giants)</span></div>
+                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Get Haligtree Secret Medallion (Left) at Castle Sol (Mountaintop of the Giants)</span></div>
                     </div>
                 </div>
-                <!-- Consecrated Snowfield -->
+                <div class="region-section" data-region="Volcano Manor"> <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Volcano Manor</h3> <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Tanith (Volcano Manor)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Bernahl (Volcano Manor)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust Patches dialogue (shaded castle)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Patches’ item to Tanith, kill Tanith and bodyguard (Volcano Manor)</span></div>
+                    </div>
+                </div>
+                <div class="region-section" data-region="Limgrave"> <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Limgrave (Post-Altus)</h3> <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Return to Patches in Murkwater Cave, fight, but do not kill (Limgrave)</span></div>
+                    </div>
+                </div>
                 <div class="region-section" data-region="Consecrated Snowfield">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Consecrated Snowfield</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach Consecrated Snowfield</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find giant Albinauric at Apostate Derelict and summon Latenna (Consecrated Snowfield)</span></div>
                     </div>
                 </div>
-                <!-- Mohgwyn Palace -->
+                <div class="region-section" data-region="Jarburg">
+                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Jarburg</h3>
+                    <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with diallos (Jarburg)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload jarburg speak to Jar-bairn</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload jarburg again and speak to Jar-bairn</span></div>
+                    </div>
+                </div>
                 <div class="region-section" data-region="Mohgwyn Palace">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Mohgwyn Palace</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Enter Mohgwyn Palace</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill 3 invaders at blood swamp</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill 3 invaders at blood swamp {fails if mohg is killed}</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find invasion sign [Varre] near Mausoleum Dynasty Midpoint</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill Mohg</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Rest at Mohg Arena Site of Grace</span></div>
                     </div>
                 </div>
-                <!-- Miquella’s Haligtree -->
                 <div class="region-section" data-region="Miquella’s Haligtree">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Miquella’s Haligtree</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach Miquella’s Haligtree (Consecrated Snowfield)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Millicent next to Prayer Room Site of Grace</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill Malenia</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Tell Gideon about locations and deaths of Mohg and Malenia (Roundtable Hold)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Millicent next to Prayer Room site of grace</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill ulcerated tree spirit (Miquella’s Haligtree)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Assist Millicent {rotten winged sword insignia} OR assist her sisters {Millicent’s prosthesis}</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>If assisted Millicent, reload area and exhaust dialogue with Millicent</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Take unalloyed gold needle and interact with flower in Malenia’s arena</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Assist Millicent {rotten winged sword insignia} OR assist her sisters {millicent’s prothesis} (Miquella’s Haligtree)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>{If assisted Millicent} reload area and exhaust dialog with millicent</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Take unalloyed gold needle and interact with flower in malenia’s arena (Miquella’s Haligtree)</span></div>
                     </div>
                 </div>
-                <!-- Crumbling Farum Azula -->
+                <div class="region-section" data-region="Roundtable Hold">
+                    <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Roundtable Hold (Final)</h3> <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Tell Gideon about locations and deaths of Mohg and Malenia (Roundtable Hold)</span></div>
+                    </div>
+                </div>
+                <div class="region-section" data-region="Caelid">
+                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Caelid</h3>
+                    <div class="quest-list pl-4">
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Kill/loot Gowry in Gowry’s shack (Caelid)</span></div>
+                    </div>
+                </div>
                 <div class="region-section" data-region="Crumbling Farum Azula">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Crumbling Farum Azula</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find and defeat Bernahl (Crumbling Farum Azula)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Placidusax (optional remembrance boss)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Maliketh</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Alexander and defeat him (Crumbling Farum Azula)</span></div>
                     </div>
                 </div>
-                <!-- Leyndell, Ash -->
                 <div class="region-section" data-region="Leyndell, Ash">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Leyndell, Ash</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Corhyn at tip of spear (Leyndell, Ash)</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find Goldmask through path under elevator (Leyndell, Ash)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload area and go back to Corhyn and Goldmask to pick up respective sets</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload are and go back to Corhyn and Goldmask to pick up respective sets</span></div>
                     </div>
                 </div>
-                <!-- Roundtable Hold Final -->
                 <div class="region-section" data-region="Roundtable Hold">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Roundtable Hold (Final)</h3>
                     <div class="quest-list pl-4">
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue between Rodreika and Hewg</span></div>
                     </div>
                 </div>
-                <!-- Jarburg -->
                 <div class="region-section" data-region="Jarburg">
-                    <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Jarburg</h3>
+                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Jarburg</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Jar-Bairn and Diallos (Jarburg)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Exhaust dialogue with Diallos (Jarburg)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload Jarburg, speak to Jar-Bairn</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload Jarburg again and speak to Jar-Bairn</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Jar-Bairn Alexander’s Innards (Jarburg)</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload area, get Companion Jar Talisman where Jar-Bairn was seated</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Give Jar Bairn Alexander’s Innards (jarburg)</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reload area get companion Jar Talisman where Jar-Bairn was seated</span></div>
                     </div>
                 </div>
-                <!-- Endgame -->
                 <div class="region-section" data-region="Endgame">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Endgame</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Radagon</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Elden Beast</span></div>
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
 
-        <!-- Shadow of the Erdtree Quests -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-semibold mb-4 text-gray-700">Shadow of the Erdtree Side Quests</h2>
             <p class="text-gray-600 mb-4">The DLC is a separate story from the main game. Completing all DLC side quests right after Mohg’s boss fight is possible, but you can go back and forth between the main game and DLC if needed.</p>
@@ -528,17 +471,17 @@
                 <div class="region-section" data-region="Shadow of the Erdtree">
                     <h3 class="text-xl font-semibold text-gray-700 cursor-pointer" onclick="toggleSection(this)">Shadow of the Erdtree</h3>
                     <div class="quest-list pl-4">
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Defeat Mohg and rest at Mohg’s Arena Site of Grace</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak with Leda and exhaust her dialogue</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Touch the withered arm and reach Realm of Shadow</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>East of Scorched Ruins, find a pothead with a Scadutree Fragment</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Find a Revered Spirit Ash directly south of the pothead</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach Three Paths Cross Site of Grace and speak to Hornsent and Freyja until dialogues are exhausted</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Hornsent will give you a Cross Map</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Interact with every Miquella Cross you see</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach Main Gate Cross Site of Grace</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Touch the ~withered arm~ and reach Realm of Shadow</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>East of Scorched Ruins there’s a pothead with a scadutree fragment</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>There is also a revered spirit ash directly south of the pothead</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach three paths cross site of grace and speak to Hornsent and Freyja until both of their dialogues are exhausted</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Hornsent will give you a cross map</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Make sure to interact with every Miquella Cross you see</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Reach Main Gate Cross site of grace</span></div>
                         <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speak to Moore and Ansbach until dialogues are exhausted</span></div>
-                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Near Cliffroad Terminus Site of Grace, interact with a friend bug to progress Moore’s questline</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Speaking to Ansbach about the Miquella crosses you see is not prevalent to his questline and it’s more for just bits of exposition</span></div>
+                        <div class="flex items-center"><input type="checkbox" class="mr-2"><span>Near Cliffroad Terminus site of grace (right near the night larval tear location) there is a friend bug, interact with him to progress Moore’s questline (you’ll need to interact with numerous friend bugs before making any significant progress with Moore)</span></div>
                     </div>
                 </div>
             </div>
@@ -569,69 +512,110 @@
                 const isActive = region === 'all' || section.dataset.region === region;
                 section.classList.toggle('active', isActive);
                 const questList = section.querySelector('.quest-list');
-                if (questList) {
+                if (questList) { // Ensure questList exists
+                    // Make sure that if a region is shown, its quest list is also shown
+                    // And if a region is hidden, its quest list is also hidden.
+                    // The 'active' class on quest-list determines visibility.
                     questList.classList.toggle('active', isActive);
                 }
             });
+             // If filtering for "all", ensure all individual quest lists within active region sections are shown
+            if (region === 'all') {
+                document.querySelectorAll('.region-section.active .quest-list').forEach(ql => ql.classList.add('active'));
+            }
         }
 
         // Search functionality
         document.getElementById('searchInput').addEventListener('input', function() {
-            const query = this.value.toLowerCase();
+            const query = this.value.toLowerCase().trim();
             document.querySelectorAll('.quest-list span').forEach(span => {
+                const questItemDiv = span.parentElement;
                 const text = span.textContent.toLowerCase();
                 const matches = query && text.includes(query);
-                span.parentElement.style.display = matches || !query ? 'flex' : 'none';
+                
+                // Show/hide based on match
+                questItemDiv.style.display = matches || !query ? 'flex' : 'none';
+                
+                // Highlight
                 if (matches) {
-                    span.innerHTML = text.replace(new RegExp(query, 'gi'), match => `<span class="search-highlight">${match}</span>`);
+                    // Remove previous highlights to avoid nested span issues
+                    span.innerHTML = span.textContent.replace(/<span class="search-highlight">|<\/span>/gi, '');
+                    // Apply new highlight
+                    span.innerHTML = span.textContent.replace(new RegExp(query, 'gi'), match => `<span class="search-highlight">${match}</span>`);
                 } else {
-                    span.innerHTML = span.textContent;
+                     // Remove highlights if query is empty or no match
+                    span.innerHTML = span.textContent.replace(/<span class="search-highlight">|<\/span>/gi, '');
                 }
             });
-            document.querySelectorAll('.region-section.active .quest-list').forEach(list => {
-                list.classList.add('active');
-            });
+
+            // Ensure relevant sections and lists are visible when searching
+            if (query) {
+                document.querySelectorAll('.region-section').forEach(section => {
+                    // Check if any quest item within this section is visible
+                    const hasVisibleQuest = Array.from(section.querySelectorAll('.quest-list .flex')).some(item => item.style.display !== 'none');
+                    if (hasVisibleQuest) {
+                        section.classList.add('active');
+                        const questList = section.querySelector('.quest-list');
+                        if (questList) {
+                            questList.classList.add('active');
+                        }
+                    } else {
+                        // If no items match in this section (and it's not "all" filter), hide it.
+                        // This part might need adjustment based on desired interaction with region filters.
+                        // For now, search overrides region filter for visibility of matching items' sections.
+                        // section.classList.remove('active');
+                        // const questList = section.querySelector('.quest-list');
+                        // if (questList) {
+                        //    questList.classList.remove('active');
+                        // }
+                    }
+                });
+            } else {
+                // If search is cleared, re-apply the default or last selected region filter
+                // This is tricky without knowing the last selected filter. Default to 'Limgrave'.
+                filterRegion(document.querySelector('.region-section.active')?.dataset.region || 'Limgrave');
+            }
         });
 
-        // Save progress to cache
+
+        // Save progress to cache (simplified, consider localStorage for broader compatibility)
         async function saveProgress() {
             const checkboxes = document.querySelectorAll('input[type="checkbox"]');
             const progress = Array.from(checkboxes).map(cb => cb.checked);
             try {
-                const cache = await caches.open('elden-ring-checklist');
-                await cache.put(
-                    '/progress',
-                    new Response(JSON.stringify(progress), {
-                        headers: { 'Content-Type': 'application/json' }
-                    })
-                );
+                 localStorage.setItem('eldenRingChecklistProgress', JSON.stringify(progress));
             } catch (error) {
-                console.error('Error saving to cache:', error);
+                console.error('Error saving to localStorage:', error);
             }
         }
 
         // Load progress from cache
         async function loadProgress() {
             try {
-                const cache = await caches.open('elden-ring-checklist');
-                const response = await cache.match('/progress');
-                if (response) {
-                    const progress = await response.json();
+                const progressString = localStorage.getItem('eldenRingChecklistProgress');
+                if (progressString) {
+                    const progress = JSON.parse(progressString);
                     document.querySelectorAll('input[type="checkbox"]').forEach((cb, index) => {
-                        cb.checked = progress[index] || false;
-                        if (cb.checked) {
-                            cb.nextElementSibling.classList.add('completed');
+                        if (progress[index] !== undefined) { // Check if progress data exists for this checkbox
+                            cb.checked = progress[index];
+                            if (cb.checked) {
+                                cb.nextElementSibling.classList.add('completed');
+                            } else {
+                                cb.nextElementSibling.classList.remove('completed');
+                            }
                         }
                     });
                 }
             } catch (error) {
-                console.error('Error loading from cache:', error);
+                console.error('Error loading from localStorage:', error);
             }
         }
 
         // Initialize
-        loadProgress();
-        filterRegion('Limgrave');
+        window.addEventListener('load', () => {
+            loadProgress();
+            filterRegion('Limgrave'); // Default to Limgrave active
+        });
     </script>
 </body>
 </html>
